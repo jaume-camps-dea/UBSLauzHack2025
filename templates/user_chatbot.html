@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LauzHack Chatbot</title>
+    <link rel="stylesheet" href="./../static/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="page">
+      <nav class="top-nav">
+        <div class="brand">
+          <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.webp') }}" alt="UBS Logo" width="100" />    
+          </div>
+        </div>
+        <div class="nav-center">
+          <button class="btn-nav active" type="button">Chatbot</button>
+          <a href="/daily"><button class="btn-nav inactive" type="button">Daily Briefing</button></a>
+        </div>
+      </nav>
+      <div class="main-content">
+        <div class="user-info-container">
+          <!-- Personal Information Container -->
+          <div class="personal-info">
+            <h2>User Information</h2>
+            <p>Name: </p>
+            <p>Gender: </p>
+            <p>BirthDate: </p>
+          </div>
+          <!-- KPIs Container -->
+          <div class="kpis">
+            <div class="kpi">Current Balance: <br><br> </div>
+            <div class="kpi">% of transactions inside UBS: <br></div>
+            <div class="kpi">Avg. Monthly NetCashflow: <br></div>
+            <div class="kpi">Avg. Monthly Outcome: <br></div>
+            <div class="kpi">Number of transactions: <br></div>
+            <div class="kpi">Avg. Size of transactions: <br></div>
+            
+          </div>
+        </div>
+        <div class="data-container">
+          <!-- Table Container -->
+          <div class="table-container">
+            <h2>Transaction History</h2>
+              <div class="table-scroll">
+                <table id="transactionsTable">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Amount</th>
+                      <th>Currency</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Transactions will be populated here via JS -->
+                  </tbody>
+                </table>
+              </div>
+          </div>
+          <!-- Plots Container -->
+          <div class="plots-container">
+            <div id="plot1"></div>
+            <div class="table-scroll">
+            <div id="plot2"></div>
+          </div>
+          </div>
+        </div>
+
+        <!-- Updated to latest Plotly version -->
+        <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+      </div>
+      
+      <div class="chat-shell">
+        <div class="chat-panel">
+          <section class="messages" id="messages" aria-live="polite"></section>
+
+          <form id="chat-form" class="chat-form" autocomplete="off">
+            <div class="input-wrapper">
+              <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+              <input
+                id="message-input"
+                type="text"
+                name="message"
+                placeholder="Type your message..."
+                required
+              />
+            </div>
+            <button type="submit" class="send-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Global functions for plot updates
+      window.updateBalancePlot = function(transactions) {
+        console.log('Updating plot with transactions:', transactions);
+        
+        if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+          console.warn('No transaction data provided');
+          return;
+        }
+
+        // Sort by date
+      transactions.sort((a, b) => new Date(a.transaction_date) - new Date(b.transaction_date));
+
+      // ----------------------------
+      // 2. BUILD TRACES
+      // ----------------------------
+      const incoming = { x: [], y: [], type: "bar", name: "Incoming", marker: { color: "green" } };
+      const outgoing = { x: [], y: [], type: "bar", name: "Outgoing", marker: { color: "red" } };
+
+      const dates = [];
+      const balance = [];
+      let cumulative = 0;
+
+      transactions.forEach(t => {
+        const date = t.transaction_date;
+        const amt = parseFloat(t.amount);
+
+        if (t.debit_credit === "credit") {
+          incoming.x.push(date);
+          incoming.y.push(amt);
+          cumulative += amt;
+        } else {
+          outgoing.x.push(date);
+          outgoing.y.push(-amt);
+          cumulative -= amt;
+        }
+
+        dates.push(date);
+        balance.push(cumulative);
+      });
+
+      // Cumulative balance trace
+      const balanceLine = {
+        x: dates,
+        y: balance,
+        type: "scatter",
+        mode: "lines+markers",
+        name: "Balance",
+        line: { color: "#1d4ed8", width: 3 },
+        marker: { size: 6 }
+      };
+
+      // ----------------------------
+      // 3. PLOT
+      // ----------------------------
+      Plotly.newPlot("plot1", [incoming, outgoing, balanceLine], {
+        title: "Money Flow & Cumulative Balance",
+        barmode: "relative",
+        xaxis: { title: "Date" },
+        yaxis: { title: "Amount (CHF)" },
+        margin: { l: 40, r: 20, t: 50, b: 40 }
+      });
+
+      };
+
+      window.updateTransactionTable = function(transactions) {
+        console.log('Updating table with transactions:', transactions);
+        const tableBody = document.querySelector('#transaction-table tbody');
+        if (!tableBody) {
+          console.error('Table body not found');
+          return;
+        }
+
+        // Clear existing rows (except header)
+        tableBody.innerHTML = '';
+
+        // Add new transaction rows
+        transactions.forEach(transaction => {
+          const row = document.createElement('tr');
+          
+          const dateCell = document.createElement('td');
+          dateCell.textContent = transaction.transaction_date;
+          
+          const descCell = document.createElement('td');
+          descCell.textContent = transaction.description || 'Transaction';
+          
+          const amountCell = document.createElement('td');
+          const amount = parseFloat(transaction.amount) || 0;
+          amountCell.textContent = amount >= 0 ? `$${amount.toFixed(2)}` : `-$${Math.abs(amount).toFixed(2)}`;
+          amountCell.style.color = amount >= 0 ? 'green' : 'red';
+          
+          row.appendChild(dateCell);
+          row.appendChild(descCell);
+          row.appendChild(amountCell);
+          
+          tableBody.appendChild(row);
+        });
+      };
+
+      window.updateKPIs = function (transactions) {
+
+if (!Array.isArray(transactions) || transactions.length === 0) {
+    console.warn("No transactions received.");
+    return;
+}
+
+// ---- CLEAN TRANSACTIONS (REMOVE NULL AMOUNTS OR INVALID DATES) ----
+const cleanTx = transactions.filter(t =>
+    t &&
+    t.transaction_date &&
+    t.amount !== null &&
+    !isNaN(Number(t.amount))
+);
+
+if (cleanTx.length === 0) {
+    console.warn("No valid transactions after cleaning.");
+    return;
+}
+
+// ---- SORT Correctly → MOST RECENT FIRST ----
+cleanTx.sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
+
+// ---- CURRENT BALANCE = balance of MOST RECENT transaction ----
+const currentBalance = Number(cleanTx[0].balance ?? 0);
+
+// ---- DISTINCT MONTHS (ACROSS YEARS) ----
+const distinctMonths = new Set();
+cleanTx.forEach(t => {
+    const d = new Date(t.transaction_date);
+    if (!isNaN(d)) {
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        distinctMonths.add(ym);
+    }
+});
+const numberOfMonths = Math.max(distinctMonths.size, 1);
+
+// ---- NET INCOME = credits – debits ----
+const totalNetIncome = cleanTx.reduce((sum, t) => {
+    const value = Number(t.amount);
+    if (t.debit_credit === "credit") return sum + value;
+    if (t.debit_credit === "debit") return sum - value;
+    return sum;
+}, 0);
+
+const avgMonthlyIncome = totalNetIncome / numberOfMonths;
+
+// ---- MONTHLY OUTCOME = ONLY debits ----
+const totalDebits = cleanTx
+    .filter(t => t.debit_credit === "debit")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+const avgMonthlyOutcome = totalDebits / numberOfMonths;
+
+// ---- NUMBER OF TRANSACTIONS ----
+const numberOfTransactions = cleanTx.length;
+
+// ---- AVG TRANSACTION SIZE ----
+const totalAmountAbs = cleanTx.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+const avgTransactionSize = totalAmountAbs / numberOfTransactions;
+
+const insideUBSCount = cleanTx.filter(t => t.ext_counterparty_account_id === null).length;
+
+const insideUBSAvg = insideUBSCount / numberOfTransactions * 100
+
+// ---- UPDATE DOM ----
+const kpiElements = document.querySelectorAll('.kpi');
+
+const currency = transactions[0].currency
+
+if (kpiElements.length >= 6) {
+
+    kpiElements[0].innerHTML = `Current Balance: <br>${currency} ${currentBalance.toFixed(2)}`;
+
+    // UBS % — placeholder until we have rules
+    kpiElements[1].innerHTML = `% of transactions inside UBS: <br> ${insideUBSAvg.toFixed(2)} %`;
+
+    kpiElements[2].innerHTML = `Avg. Monthly NetCashflow: <br>${currency} ${avgMonthlyIncome.toFixed(2)}`;
+
+    kpiElements[3].innerHTML = `Avg. Monthly Outcome: <br>${currency} ${avgMonthlyOutcome.toFixed(2)}`;
+
+    kpiElements[4].innerHTML = `Number of transactions: <br>${numberOfTransactions}`;
+
+    kpiElements[5].innerHTML = `Avg. Size of transactions: <br>${currency} ${avgTransactionSize.toFixed(2)}`;
+}
+};
+
+
+      // NEW: Function to update user information
+      window.updateUserInfo = function(userInfo) {
+        console.log('Updating user info:', userInfo);
+        const infoElements = document.querySelectorAll('.personal-info p');
+        
+        if (infoElements.length >= 1 && userInfo) {
+          if (userInfo.partner_name !== undefined) {
+            infoElements[0].textContent = `Name: ${userInfo.partner_name}`;
+          }
+          if (userInfo.partner_gender !== undefined) {
+            infoElements[1].textContent = `Gender: ${userInfo.partner_gender}`;
+          }
+          if (userInfo.partner_birth_year !== undefined) {
+            infoElements[2].textContent = `Birth Date: ${userInfo.partner_birth_year}`;
+          }
+        }
+      };
+
+      // // Initialize plots when the page loads
+      // document.addEventListener('DOMContentLoaded', function() {
+      //   // Initialize plot1 with empty data
+      //   Plotly.newPlot('plot1', [{
+      //     x: [],
+      //     y: [],
+      //     type: 'scatter',
+      //     mode: 'lines+markers',
+      //     marker: {color: '#dc2626'},
+      //     line: {color: '#dc2626'}
+      //   }], {
+      //     title: 'Balance Over Time',
+      //     xaxis: {title: 'Date'},
+      //     yaxis: {title: 'Balance ($)'},
+      //     margin: {l: 40, r: 20, t: 40, b: 40}
+      //   });
+
+      //   // Initialize plot2 with default data
+      //   Plotly.newPlot('plot2', [{
+      //     labels: ['Investments', 'Savings', 'Checking'],
+      //     values: [20000, 30000, 15000],
+      //     type: 'pie',
+      //     marker: {colors: ['#dc2626', '#b91c1c', '#991b1b']}
+      //   }], {
+      //     title: 'Account Distribution',
+      //     margin: {l: 20, r: 20, t: 40, b: 20}
+      //   });
+      // });
+
+
+      window.plotTopSenders = function(transactions, clientAccountId) {
+      console.log('Updating top senders plot with transactions:', transactions);
+    
+      if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+          console.warn('No transaction data provided');
+          return;
+      }
+    
+      // ----------------------------
+      // 1. FILTER & ENRICH DATA
+      // ----------------------------
+      // Filter for incoming transactions (credit) to the specific client
+      const incomingToClient = transactions.filter(tx =>
+          tx.performing_account_id === clientAccountId &&
+          tx.debit_credit === 'credit'
+      );
+    
+      if (incomingToClient.length === 0) {
+          console.log(`No incoming transactions found for account ${clientAccountId}`);
+          return;
+      }
+    
+      // Add transaction type and counterparty_id
+      const enrichedTransactions = incomingToClient.map(tx => ({
+          transaction_type: tx.counterparty_account_id !== null ? 'Internal' : 'External',
+          counterparty_id: tx.counterparty_account_id !== null
+              ? tx.counterparty_account_id
+              : tx.ext_counterparty_account_id,
+          amount: parseFloat(tx.amount)
+      }));
+    
+      // ----------------------------
+      // 2. GROUP BY SENDER
+      // ----------------------------
+      const senderGroups = {};
+      enrichedTransactions.forEach(tx => {
+          const key = `${tx.counterparty_id}|${tx.transaction_type}`;
+          if (!senderGroups[key]) {
+              senderGroups[key] = {
+                  counterparty_id: tx.counterparty_id,
+                  transaction_type: tx.transaction_type,
+                  total_sent: 0,
+                  number_of_transfers: 0
+              };
+          }
+          senderGroups[key].total_sent += tx.amount;
+          senderGroups[key].number_of_transfers += 1;
+      });
+    
+      // Convert to array and get top 10
+      const topSenders = Object.values(senderGroups)
+          .sort((a, b) => b.total_sent - a.total_sent)
+          .slice(0, 10)
+          .reverse(); // Reverse for horizontal bar chart (highest at top)
+    
+      // ----------------------------
+      // 3. BUILD TRACES
+      // ----------------------------
+      const internalTrace = {
+          x: [],
+          y: [],
+          type: "bar",
+          name: "Internal",
+          orientation: 'h',
+          marker: { color: "rgba(46, 134, 171, 0.8)" },
+          text: [],
+          textposition: 'outside',
+          hovertemplate: '<b>%{y}</b><br>Amount: CHF %{x:,.2f}<br>Transfers: %{text}<extra></extra>'
+      };
+    
+      const externalTrace = {
+          x: [],
+          y: [],
+          type: "bar",
+          name: "External",
+          orientation: 'h',
+          marker: { color: "rgba(162, 59, 114, 0.8)" },
+          text: [],
+          textposition: 'outside',
+          hovertemplate: '<b>%{y}</b><br>Amount: CHF %{x:,.2f}<br>Transfers: %{text}<extra></extra>'
+      };
+    
+      topSenders.forEach(sender => {
+          const id = sender.counterparty_id;
+          const shortId = `${id.substring(0, 8)}...${id.substring(id.length - 8)}`;
+          const label = `${shortId} (${sender.transaction_type[0]})`;
+        
+          if (sender.transaction_type === 'Internal') {
+              internalTrace.x.push(sender.total_sent);
+              internalTrace.y.push(label);
+              internalTrace.text.push(sender.number_of_transfers);
+          } else {
+              externalTrace.x.push(sender.total_sent);
+              externalTrace.y.push(label);
+              externalTrace.text.push(sender.number_of_transfers);
+          }
+    });
+   
+    // ----------------------------
+    // 4. CALCULATE SUMMARY STATS
+    // ----------------------------
+    const totalAmount = enrichedTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+    const internalTxs = enrichedTransactions.filter(tx => tx.transaction_type === 'Internal');
+    const externalTxs = enrichedTransactions.filter(tx => tx.transaction_type === 'External');
+    const internalAmount = internalTxs.reduce((sum, tx) => sum + tx.amount, 0);
+    const externalAmount = externalTxs.reduce((sum, tx) => sum + tx.amount, 0);
+   
+    console.log(`Total incoming: CHF ${totalAmount.toLocaleString('en-CH', { minimumFractionDigits: 2 })}`);
+    console.log(`  - Internal: ${internalTxs.length} transactions, CHF ${internalAmount.toLocaleString('en-CH', { minimumFractionDigits: 2 })}`);
+    console.log(`  - External: ${externalTxs.length} transactions, CHF ${externalAmount.toLocaleString('en-CH', { minimumFractionDigits: 2 })}`);
+   
+    // ----------------------------
+    // 5. PLOT
+    // ----------------------------
+    const data = [internalTrace, externalTrace].filter(trace => trace.x.length > 0);
+   
+    Plotly.newPlot("plot2", data, {
+        title: `Top 10 Client Senders`,
+        barmode: "stack",
+        xaxis: {
+            title: "Total Amount Sent (CHF)",
+            tickformat: ",.0f"
+        },
+        yaxis: {
+            title: "Sender Account ID"
+        },
+        margin: { l: 180, r: 40, t: 80, b: 60 },
+        height: 500
+    });
+};
+
+    </script>
+
+    <script>
+
+
+
+      // Chat functionality
+      // Get DOM elements
+      const messages = document.getElementById("messages");
+      const form = document.getElementById("chat-form");
+      const input = document.getElementById("message-input");
+
+      // Define session ID for tracking conversations
+      const sessionId = "session_" + Date.now();
+
+
+      // Typing indicator functionality
+      const typingIndicator = {
+        element: null,
+        show() {
+          if (this.element) return;
+          const messageWrapper = document.createElement("div");
+          messageWrapper.className = "message-wrapper bot";
+          
+          const botIcon = document.createElement("div");
+          botIcon.className = "bot-icon";
+          botIcon.textContent = "C";
+          messageWrapper.appendChild(botIcon);
+          
+          const bubble = document.createElement("div");
+          bubble.className = "message bot";
+          bubble.textContent = "Thinking…";
+          messageWrapper.appendChild(bubble);
+          
+          this.element = messageWrapper;
+          messages.appendChild(this.element);
+          messages.scrollTop = messages.scrollHeight;
+        },
+        hide() {
+          if (!this.element) return;
+          this.element.remove();
+          this.element = null;
+        },
+      };
+
+      // Append message to chat
+      const appendMessage = (sender, text, variation = "") => {
+        const messageWrapper = document.createElement("div");
+        messageWrapper.className = `message-wrapper ${sender}`;
+        
+        if (sender === "bot") {
+          const botIcon = document.createElement("div");
+          botIcon.className = "bot-icon";
+          botIcon.textContent = "C";
+          messageWrapper.appendChild(botIcon);
+        }
+        
+        const bubble = document.createElement("div");
+        bubble.className = `message ${sender} ${variation}`.trim();
+        bubble.textContent = text;
+        messageWrapper.appendChild(bubble);
+        
+        if (sender === "user") {
+          const userIcon = document.createElement("div");
+          userIcon.className = "user-icon";
+          userIcon.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          `;
+          messageWrapper.appendChild(userIcon);
+        }
+        
+        messages.appendChild(messageWrapper);
+        messages.scrollTop = messages.scrollHeight;
+      };
+
+      // Send message to backend
+      const sendMessage = async (event) => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+
+        appendMessage("user", text);
+        input.value = "";
+        input.focus();
+
+        // Disable form during request
+        form.elements.namedItem("message").disabled = true;
+        form.querySelector("button").disabled = true;
+        typingIndicator.show();
+
+        try {
+          const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              message: text,
+              sessionId: sessionId
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          typingIndicator.hide();
+
+          // transactions table
+
+          if(data.involve_multiple_users==false){
+            const tbody = document.querySelector('#transactionsTable tbody');
+            data.result.all_transactions.forEach(transaction => {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td>${transaction.transaction_date}</td>
+                <td class="amount ${transaction.debit_credit === 'credit' ? 'credit' : 'debit'}">
+                  ${transaction.debit_credit === 'credit' ? '+' : '-'}${transaction.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                </td>
+                <td>${transaction.currency}</td>
+              `;
+              tbody.appendChild(row);
+            });
+          }
+          
+          console.log('Received response from server:', data);
+          
+          // Display bot response
+          appendMessage("bot", data.summary || data.reply || data.message || "No response received.");
+          
+          // Update plot and table if transaction data is provided
+          if (data.involve_multiple_users==false) {
+            console.log('Updating with transaction data');
+            window.updateBalancePlot(data.result.all_transactions);
+            window.updateTransactionTable(data.result.all_transactions);
+            window.plotTopSenders(data.result.all_transactions, data.result.accounts[0].account_id);
+          }
+          
+          // Update KPIs if provided
+          if (data.involve_multiple_users==false) {
+            console.log('Updating with KPI data');
+            window.updateKPIs(data.result.all_transactions);
+          }
+          
+          // NEW: Update user information if provided
+          if (data.involve_multiple_users==false) {
+            console.log('Updating with user info data');
+            window.updateUserInfo(data.result);
+          }
+          
+        } catch (error) {
+          typingIndicator.hide();
+          console.error("Chat error:", error);
+          appendMessage(
+            "bot",
+            "Error: Could not reach server. Please try again later.",
+            "error"
+          );
+        } finally {
+          form.elements.namedItem("message").disabled = false;
+          form.querySelector("button").disabled = false;
+        }
+      };
+
+      // Event listeners
+      form.addEventListener("submit", sendMessage);
+
+      // Initial bot message
+      appendMessage(
+        "bot",
+        "Hello! I'm your financial assistant. How can I help you today?"
+      );
+    </script>
+  </body>
+</html>

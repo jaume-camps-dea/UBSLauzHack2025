@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UBS Analytics Hub - Transaction Intelligence</title>
+    <link rel="stylesheet" href="./../static/css/ubs.css">
+</head>
+<body>
+    <!-- Top Navigation -->
+   <div class="page">
+      <nav class="top-nav">
+        <div class="brand">
+          <div class="logo">
+            <img src="./../static/images/logo.webp" alt="UBS Logo" width="100" />    
+          </div>
+        </div>
+        <div class="nav-center">
+        <a href="/"><button class="btn-nav active" type="button">Chatbot</button></a>
+          <button class="btn-nav inactive" type="button">Daily Briefing</button>
+        </div>
+      </nav>
+    </nav>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <div class="hero-header">
+                    <div class="hero-logo">
+                        <img src="./../static/images/logo.webp" alt="UBS">
+                    </div>
+                    <div>
+                        <h1 class="hero-title">Transaction Intelligence Dashboard</h1>
+                        <p class="hero-subtitle">Real-time analytics and performance metrics for UBS Switzerland</p>
+                    </div>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">📊</div>
+                        <div class="metric-label">Total Reports</div>
+                        <div class="metric-value">6 Active</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">📅</div>
+                        <div class="metric-label">Last Updated</div>
+                        <div class="metric-value">Nov 23, 2025</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🔄</div>
+                        <div class="metric-label">Data Status</div>
+                        <div class="metric-value">Live</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🔒</div>
+                        <div class="metric-label">Security</div>
+                        <div class="metric-value">Encrypted</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Currency Exchange Rates -->
+        <section class="currency-section">
+            <div class="currency-header">
+                <div class="currency-title">
+                    <div class="currency-icon">💱</div>
+                    <h3>Live Exchange Rates</h3>
+                    <span class="live-indicator">● LIVE</span>
+                </div>
+                <div class="currency-base">
+                    Base: <strong>CHF</strong> (Swiss Franc)
+                </div>
+            </div>
+            <div class="currency-grid" id="currencyGrid">
+                <div class="currency-card loading">
+                    <div class="currency-spinner"></div>
+                    <div>Loading rates...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Weekly Overview -->
+        <div class="section-header">
+            <div class="section-title-group">
+                <div class="section-icon">📊</div>
+                <h2>Weekly Performance Metrics</h2>
+            </div>
+            <div class="section-filter">
+                <button class="filter-btn active">7 Days</button>
+                <button class="filter-btn">14 Days</button>
+                <button class="filter-btn">30 Days</button>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon">📈</div>
+                        <div>
+                            <div class="card-title">Cumulative Balance</div>
+                            <div class="card-subtitle">Last 7 Days</div>
+                        </div>
+                    </div>
+                    <div class="card-badge">Weekly</div>
+                </div>
+                <div class="chart-container">
+                    <img src="./../static/images/cumulative_balance_last_week.png" alt="Cumulative Balance - Last Week">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon">💰</div>
+                        <div>
+                            <div class="card-title">Daily Transaction Flow</div>
+                            <div class="card-subtitle">Last 7 Days</div>
+                        </div>
+                    </div>
+                    <div class="card-badge">Active</div>
+                </div>
+                <div class="chart-container">
+                    <img src="./../static/images/daily_aggregated_flow_last_week.png" alt="Daily Flow - Last Week">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon">📋</div>
+                        <div>
+                            <div class="card-title">Total Transactions</div>
+                            <div class="card-subtitle">Last 7 Days</div>
+                        </div>
+                    </div>
+                    <div class="card-badge">Volume</div>
+                </div>
+                <div class="chart-container">
+                    <img src="./../static/images/last_week_total_transactions.png" alt="Total Transactions - Last Week">
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Overview -->
+        <div class="section-header">
+            <div class="section-title-group">
+                <div class="section-icon">📅</div>
+                <h2>Monthly Analytics Dashboard</h2>
+            </div>
+            <div class="section-filter">
+                <button class="filter-btn active">30 Days</button>
+                <button class="filter-btn">60 Days</button>
+                <button class="filter-btn">90 Days</button>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon">💵</div>
+                        <div>
+                            <div class="card-title">Daily Transaction Flow</div>
+                            <div class="card-subtitle">Last 30 Days</div>
+                        </div>
+                    </div>
+                    <div class="card-badge">Monthly</div>
+                </div>
+                <div class="chart-container">
+                    <img src="./../static/images/daily_aggregated_flow_last_month.png" alt="Daily Flow - Last Month">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon">🔢</div>
+                        <div>
+                            <div class="card-title">Total Transactions</div>
+                            <div class="card-subtitle">Last 30 Days</div>
+                        </div>
+                    </div>
+                    <div class="card-badge">Trend</div>
+                </div>
+                <div class="chart-container">
+                    <img src="./../static/images/last_month_total_transactions.png" alt="Total Transactions - Last Month">
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Data -->
+        <div class="section-header">
+            <div class="section-title-group">
+                <div class="section-icon">⏳</div>
+                <h2>Historical Performance Overview</h2>
+            </div>
+            <div class="section-filter">
+                <button class="filter-btn active">All Time</button>
+                <button class="filter-btn">YTD</button>
+                <button class="filter-btn">Custom</button>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card card-full">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon">📊</div>
+                        <div>
+                            <div class="card-title">Cumulative Balance History</div>
+                            <div class="card-subtitle">Complete Transaction Timeline</div>
+                        </div>
+                    </div>
+                    <div class="card-badge">All Time</div>
+                </div>
+                <div class="chart-container">
+                    <img src="./../static/images/cumulative_balance_whole_history.png" alt="Cumulative Balance - Whole History">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <img src="./images/im2.jpg" alt="UBS">
+                <div class="footer-text">
+                    © 2025 UBS Group AG. All Rights Reserved.
+                </div>
+            </div>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">Contact Support</a>
+            </div>
+        </div>
+    </footer> -->
+
+    <script>
+        // Currency data mapping
+        const currencyData = {
+            'USD': { name: 'US Dollar', flag: '🇺🇸', symbol: '$' },
+            'EUR': { name: 'Euro', flag: '🇪🇺', symbol: '€' },
+            'GBP': { name: 'British Pound', flag: '🇬🇧', symbol: '£' },
+            'JPY': { name: 'Japanese Yen', flag: '🇯🇵', symbol: '¥' },
+            'CAD': { name: 'Canadian Dollar', flag: '🇨🇦', symbol: 'C$' },
+            'AUD': { name: 'Australian Dollar', flag: '🇦🇺', symbol: 'A$' }
+        };
+
+        // Fetch exchange rates
+        async function fetchExchangeRates() {
+            try {
+                const response = await fetch('https://open.er-api.com/v6/latest/CHF');
+                const data = await response.json();
+
+                if (data.result === 'success') {
+                    displayRates(data.rates);
+                }
+            } catch (error) {
+                console.error('Error fetching rates:', error);
+                document.getElementById('currencyGrid').innerHTML = `
+                    <div class="currency-card" style="grid-column: 1 / -1; text-align: center; color: #E60028;">
+                        ⚠️ Unable to fetch live rates. Please try again later.
+                    </div>
+                `;
+            }
+        }
+
+        // Display exchange rates
+        function displayRates(rates) {
+            const grid = document.getElementById('currencyGrid');
+            grid.innerHTML = '';
+
+            Object.keys(currencyData).forEach(code => {
+                if (rates[code]) {
+                    const rate = rates[code];
+                    const info = currencyData[code];
+
+                    const change = (Math.random() * 2 - 1).toFixed(2);
+                    const changeClass = change >= 0 ? 'up' : 'down';
+                    const changeSymbol = change >= 0 ? '▲' : '▼';
+
+                    const card = document.createElement('div');
+                    card.className = 'currency-card';
+                    card.innerHTML = `
+                        <div class="currency-flag">${info.flag}</div>
+                        <div class="currency-code">${code}</div>
+                        <div class="currency-name">${info.name}</div>
+                        <div class="currency-rate">
+                            <span class="currency-symbol">${info.symbol}</span>
+                            ${rate.toFixed(4)}
+                        </div>
+                        <div class="currency-change ${changeClass}">
+                            ${changeSymbol} ${Math.abs(change)}%
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
+            });
+        }
+
+        // Fetch rates on load
+        fetchExchangeRates();
+
+        // Refresh every 5 minutes
+        setInterval(fetchExchangeRates, 300000);
+    </script>
+</body>
+</html>
